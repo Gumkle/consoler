@@ -4,24 +4,28 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
-type Loading struct {
+type Task struct {
 	name     string
-	progress float32
 	logger   *Logger
 	done bool
 }
 
-func (loading *Loading) SetProgress(progress float32) {
-	loading.progress = progress
-	if progress >= float32(1.0) && !loading.done {
-		loading.logger.PrintSuccess(fmt.Sprintf("Loading %s finished", loading.name))
-		loading.logger.RemoveLoading(loading)
-		loading.done = true
+func (task *Task) SetDone() {
+	if !task.done {
+		task.logger.PrintSuccess(fmt.Sprintf("Finished: %s", task.name))
+		err := task.logger.RemoveTask(task)
+		if err != nil {
+			task.logger.PrintError(fmt.Sprintf("Task %s already done!", task.name))
+		}
+		task.done = true
 	}
 }
 
@@ -30,7 +34,7 @@ type Logger struct {
 	infoPrepend    string
 	warningPrepend string
 	successPrepend string
-	loadings       []*Loading
+	tasks          []*Task
 	infoChannel    chan string
 }
 
@@ -46,22 +50,33 @@ func NewLogger() *Logger {
 }
 
 func (logger *Logger) processInput() {
+	go setupCloseCleanup(logger)
 	for {
-		time.Sleep(time.Duration(rand.Intn(250)) * time.Millisecond)
+		time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
 		select {
 		 case text := <-logger.infoChannel:
 			 fmt.Printf("\033[K%s\n\u001B[K", text)
 		 default:
-			 if len(logger.loadings) > 0 {
-				 fmt.Print("====================\n")
-				 for _, loading := range logger.loadings {
-					 fmt.Printf("Loading %s: %.2f\n", loading.name, loading.progress)
+			 if len(logger.tasks) > 0 {
+				 fmt.Print("===================================================================================\n")
+				 for _, task := range logger.tasks {
+					 fmt.Printf("\033[K%s...\n", task.name)
 				 }
-				 fmt.Print(strings.Repeat("\033[1A", len(logger.loadings)+1))
+				 fmt.Printf("\033[%dA", len(logger.tasks)+1)
 				 fmt.Print("\r")
 			 }
 		}
 	}
+}
+
+func setupCloseCleanup(logger *Logger) {
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Print(strings.Repeat("\n", len(logger.tasks)+1))
+		os.Exit(0)
+	}()
 }
 
 func (logger *Logger) SetErrorPrepend(prepend string) {
@@ -96,32 +111,30 @@ func (logger *Logger) PrintSuccess(message string) {
 	logger.infoChannel <- fmt.Sprintf("%s %s", logger.successPrepend, message)
 }
 
-func (logger *Logger) NewLoading(title string) *Loading {
-	loading := new(Loading)
-	loading.name = title
-	loading.progress = 0
-	loading.logger = logger
-	logger.loadings = append(logger.loadings, loading)
-	return loading
+func (logger *Logger) NewTask(title string) *Task {
+	task := new(Task)
+	task.name = title
+	task.logger = logger
+	task.done = false
+	logger.tasks = append(logger.tasks, task)
+	return task
 }
 
-
-
-func (logger *Logger) RemoveLoading(searchedLoading *Loading) error{
+func (logger *Logger) RemoveTask(searchedTask *Task) error{
 	var lock sync.Mutex
 	lock.Lock()
-	indexOfSearchedLoading := -1
-	for index, loading := range logger.loadings {
-		if loading == searchedLoading {
-			indexOfSearchedLoading = index
+	indexOfSearchedTask := -1
+	for index, task := range logger.tasks {
+		if task == searchedTask {
+			indexOfSearchedTask = index
 			break
 		}
 	}
-	if indexOfSearchedLoading == -1 {
-		return errors.New("No such loading in logger")
+	if indexOfSearchedTask == -1 {
+		return errors.New("No such task in logger")
 	}
-	logger.loadings[indexOfSearchedLoading] = logger.loadings[len(logger.loadings)-1]
-	logger.loadings = logger.loadings[:len(logger.loadings)-1]
+	logger.tasks[indexOfSearchedTask] = logger.tasks[len(logger.tasks)-1]
+	logger.tasks = logger.tasks[:len(logger.tasks)-1]
 	lock.Unlock()
 	return nil
 }

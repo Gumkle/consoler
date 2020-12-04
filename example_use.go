@@ -1,7 +1,7 @@
 package main
 
 import (
-	"console_helper/consoler"
+	"consoler/consoler"
 	"fmt"
 	"math/rand"
 	"time"
@@ -9,9 +9,9 @@ import (
 
 func main() {
 	logger := consoler.NewLogger()
-	go randomProgress(logger.NewLoading("ladowanie1"), logger)
-	go randomProgress(logger.NewLoading("ladowanie3"), logger)
-	go randomProgress(logger.NewLoading("ladowanie2"), logger)
+	go randomProgress(logger.NewTask("proces numer 1"))
+	go randomProgress(logger.NewTask("proces numer 3"))
+	go randomProgress(logger.NewTask("proces numer 2"))
 	logger.PrintWarning("No warning")
 	logger.PrintInfo("NO info")
 	logger.PrintError("No error")
@@ -19,18 +19,27 @@ func main() {
 
 	go func() {
 		time.Sleep(3 * time.Second)
-		go randomProgress(logger.NewLoading("ladowanie4"), logger)
+		go randomProgress(logger.NewTask("proces numer 4"))
 		time.Sleep(1 * time.Second)
-		go randomProgress(logger.NewLoading("ladowanie5"), logger)
+		logger.PrintWarning("Uwaga zaraz dopierdoli")
+		go randomProgress(logger.NewTask("proces numer 5"))
+		time.Sleep(1 * time.Second)
+		go randomProgress(logger.NewTask("proces numer 6"))
+		go randomProgress(logger.NewTask("proces numer 7"))
+		go randomProgress(logger.NewTask("proces numer 8"))
+		go randomProgress(logger.NewTask("proces numer 9"))
+		go randomProgress(logger.NewTask("proces numer 10"))
+		go randomProgress(logger.NewTask("proces numer 11"))
+		go randomProgress(logger.NewTask("proces numer 12"))
+		go randomProgress(logger.NewTask("proces numer 13"))
+		go randomProgress(logger.NewTask("proces numer 14"))
 	}()
 
 	var input string
 	fmt.Scanln(&input)
 }
 
-func randomProgress(loading *consoler.Loading, logger *consoler.Logger) {
-	for progress := float32(0.0); progress <= float32(1.1); progress += float32(0.05) {
-		loading.SetProgress(progress)
-		time.Sleep(time.Duration(rand.Intn(250)) * time.Millisecond)
-	}
+func randomProgress(loading *consoler.Task) {
+	time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
+	loading.SetDone()
 }
