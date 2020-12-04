@@ -133,8 +133,9 @@ func (logger *Logger) RemoveTask(searchedTask *Task) error{
 	if indexOfSearchedTask == -1 {
 		return errors.New("No such task in logger")
 	}
-	logger.tasks[indexOfSearchedTask] = logger.tasks[len(logger.tasks)-1]
-	logger.tasks = logger.tasks[:len(logger.tasks)-1]
+	firstPiece := logger.tasks[:indexOfSearchedTask]
+	secondPiece := logger.tasks[indexOfSearchedTask+1:]
+	logger.tasks = append(firstPiece, secondPiece...)
 	lock.Unlock()
 	return nil
 }

@@ -8,6 +8,8 @@ import (
 )
 
 func main() {
+	test := []int{0,1,2,3,4,5}
+	fmt.Println(test[2:])
 	logger := consoler.NewLogger()
 	go randomProgress(logger.NewTask("proces numer 1"))
 	go randomProgress(logger.NewTask("proces numer 3"))
