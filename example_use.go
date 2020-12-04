@@ -1,30 +1,36 @@
 package main
 
 import (
+	"console_helper/consoler"
 	"fmt"
-	"helion_prices_monitor/logger"
 	"math/rand"
 	"time"
 )
 
 func main() {
-	logg := logger.NewLogger()
-	go randomProgress(logg.NewLoading("ladowanie1"), logg)
-	go randomProgress(logg.NewLoading("ladowanie3"), logg)
-	go randomProgress(logg.NewLoading("ladowanie2"), logg)
-	logg.PrintWarning("No warning")
-	logg.PrintInfo("NO info")
-	logg.PrintError("No error")
-	logg.PrintSuccess("No success")
+	logger := consoler.NewLogger()
+	go randomProgress(logger.NewLoading("ladowanie1"), logger)
+	go randomProgress(logger.NewLoading("ladowanie3"), logger)
+	go randomProgress(logger.NewLoading("ladowanie2"), logger)
+	logger.PrintWarning("No warning")
+	logger.PrintInfo("NO info")
+	logger.PrintError("No error")
+	logger.PrintSuccess("No success")
+
+	go func() {
+		time.Sleep(3 * time.Second)
+		go randomProgress(logger.NewLoading("ladowanie4"), logger)
+		time.Sleep(1 * time.Second)
+		go randomProgress(logger.NewLoading("ladowanie5"), logger)
+	}()
 
 	var input string
 	fmt.Scanln(&input)
 }
 
-func randomProgress(loading, logg) {
-	for initialProgress := float32(0.0); initialProgress < 100; initialProgress += float32(0.5) {
-		loading.SetProgress(initialProgress)
+func randomProgress(loading *consoler.Loading, logger *consoler.Logger) {
+	for progress := float32(0.0); progress <= float32(1.1); progress += float32(0.05) {
+		loading.SetProgress(progress)
 		time.Sleep(time.Duration(rand.Intn(250)) * time.Millisecond)
 	}
-	logg.PrintSuccess("Finished")
 }
