@@ -21,12 +21,23 @@ type Task struct {
 func (task *Task) SetDone() {
 	if !task.done {
 		task.logger.PrintSuccess(fmt.Sprintf("Finished: %s", task.name))
-		err := task.logger.RemoveTask(task)
-		if err != nil {
-			task.logger.PrintError(fmt.Sprintf("Task %s already done!", task.name))
-		}
-		task.done = true
+		task.makeInactive()
 	}
+}
+
+func (task *Task) SetFailed() {
+	if !task.done {
+		task.logger.PrintError(fmt.Sprintf("Failed: %s", task.name))
+		task.makeInactive()
+	}
+}
+
+func (task *Task) makeInactive() {
+	err := task.logger.RemoveTask(task)
+	if err != nil {
+		task.logger.PrintError(fmt.Sprintf("Task %s already inactive!", task.name))
+	}
+	task.done = true
 }
 
 type Logger struct {
@@ -50,7 +61,7 @@ func NewLogger() *Logger {
 }
 
 func (logger *Logger) processInput() {
-	go setupCloseCleanup(logger)
+	setupCloseCleanup(logger)
 	for {
 		time.Sleep(time.Duration(rand.Intn(200)) * time.Millisecond)
 		select {
