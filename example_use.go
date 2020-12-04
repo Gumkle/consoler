@@ -18,7 +18,6 @@ func main() {
 	logger.PrintInfo("NO info")
 	logger.PrintError("No error")
 	logger.PrintSuccess("No success")
-
 	go func() {
 		time.Sleep(3 * time.Second)
 		go randomProgress(logger.NewTask("proces numer 4"))
@@ -41,7 +40,13 @@ func main() {
 	fmt.Scanln(&input)
 }
 
-func randomProgress(loading *consoler.Task) {
-	time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
-	loading.SetDone()
+func randomProgress(task *consoler.Task) {
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+	time.Sleep(time.Duration(r1.Intn(5)) * time.Second)
+	if r1.Intn(10) < 1 {
+		task.SetFailed()
+	} else {
+		task.SetDone()
+	}
 }
