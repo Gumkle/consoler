@@ -1,8 +1,8 @@
 package main
 
 import (
-	"consoler/consoler"
 	"fmt"
+	"github.com/Gumkle/consoler/consoler"
 	"math/rand"
 	"time"
 )
@@ -44,9 +44,12 @@ func randomProgress(task *consoler.Task) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 	time.Sleep(time.Duration(r1.Intn(5)) * time.Second)
-	if r1.Intn(10) < 1 {
+	random := r1.Intn(10)
+	if random < 3 {
 		task.SetFailed()
-	} else {
+	} else if random < 6{
 		task.SetDone()
+	} else {
+		task.SetSuccessful()
 	}
 }

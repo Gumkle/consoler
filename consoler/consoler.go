@@ -18,9 +18,9 @@ type Task struct {
 	done bool
 }
 
-func (task *Task) SetDone() {
+func (task *Task) SetSuccessful() {
 	if !task.done {
-		task.logger.PrintSuccess(fmt.Sprintf("Finished: %s", task.name))
+		task.logger.PrintSuccess(fmt.Sprintf("Success: %s", task.name))
 		task.makeInactive()
 	}
 }
@@ -28,6 +28,13 @@ func (task *Task) SetDone() {
 func (task *Task) SetFailed() {
 	if !task.done {
 		task.logger.PrintError(fmt.Sprintf("Failed: %s", task.name))
+		task.makeInactive()
+	}
+}
+
+func (task *Task) SetDone() {
+	if !task.done {
+		task.logger.PrintInfo(fmt.Sprintf("Done: %s", task.name))
 		task.makeInactive()
 	}
 }
@@ -69,7 +76,7 @@ func (logger *Logger) processInput() {
 			 fmt.Printf("\033[K%s\n\u001B[K", text)
 		 default:
 			 if len(logger.tasks) > 0 {
-				 fmt.Print("===================================================================================\n")
+				 fmt.Print("####### Ongoing tasks: \n")
 				 for _, task := range logger.tasks {
 					 fmt.Printf("\033[K%s...\n", task.name)
 				 }
